@@ -1,0 +1,22 @@
+{
+  "name": "venda-online",
+  "version": "1.0.0",
+  "description": "Api para buscar preços de produtos em lojas online e enviar notificações via Telegram",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js"
+  },
+  "keywords": [],
+  "author": "Guilherme Martins",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.0",
+  "dependencies": {
+    "axios": "^1.15.0",
+    "cheerio": "^1.2.0",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "node-telegram-bot-api": "^0.67.0",
+    "sqlite3": "^6.0.1"
+  }
+}

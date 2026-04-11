@@ -1,0 +1,50 @@
+import axios from "axios";
+import * as cheerio from "cheerio";
+
+import { BaseScraper } from "../baseScraper.js";
+
+class AmazonScraper extends BaseScraper {
+  async search(productName) {
+    const url = `https://www.amazon.com.br/s?k=${encodeURIComponent(productName)}`;
+
+    const { data } = await axios.get(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+        "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+      },
+    });
+
+    const $ = cheerio.load(data);
+
+    const results = [];
+
+    $(".s-result-item").each((index, element) => {
+      const title = $(element).find("h2 span ").text().trim();
+      const priceRaw = $(element)
+        .find(".a-price .a-offscreen")
+        .first()
+        .text()
+        .trim();
+
+      if (!title || !priceRaw) return;
+
+      const price = parseFloat(
+        priceRaw
+          .replace("R$", "")
+          .replace(/\s/g, "")
+          .replace(".", "")
+          .replace(",", "."),
+      );
+
+      results.push({
+        title,
+        price,
+        source: "amazon",
+      });
+    });
+    return results;
+  }
+}
+
+export default AmazonScraper;

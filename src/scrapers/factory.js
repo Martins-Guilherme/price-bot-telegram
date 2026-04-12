@@ -20,5 +20,13 @@ export function getScraper(type) {
 }
 
 export function getAllScrapers() {
-  return Object.keys(scraperTypes).map((key) => new scraperTypes[key]());
+  return Object.keys(scraperTypes).map(
+    (key) =>
+      new scraperTypes[
+        key
+          .toLocaleLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+      ](),
+  );
 }

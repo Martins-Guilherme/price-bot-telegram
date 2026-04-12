@@ -19,7 +19,7 @@ bot.onText(/\/start/, (msg) => {
 
 bot.onText(/\/buscar (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
-  const product = match[1]?.trim();
+  const product = match[1]?.trim().replace(/\s+/g, " ");
 
   if (!product) {
     return bot.sendMessage(
@@ -68,9 +68,10 @@ bot.onText(/\/buscar (.+)/, async (msg, match) => {
     // Mensagem com a foto do produto
     for (const [i, p] of topResults.entries()) {
       const caption =
-        `#${i + 1} [${p.source.toUpperCase()}]\n` +
-        `${formatTitle(p.title)}\n` +
-        `💰 R$ ${p.price.toFixed(2)}`;
+        `✨ *Oferta encontrada*\n\n` +
+        `🏷️ *${formatTitle(p.title)}*\n` +
+        `💰 *R$ ${p.price.toFixed(2)}*\n\n` +
+        `📦 ${p.source.toUpperCase()}`;
       const options = {
         caption,
         reply_markup: {

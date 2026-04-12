@@ -1,9 +1,10 @@
 import db from "../db/database.js";
 
-export function savePrices(product, prices) {
-  const stmt = db.prepare(
-    "INSERT INTO prices (product, price, source) VALUES (?, ?, ?)",
-  );
+export function savePrices(prices) {
+  const stmt = db.prepare(`
+    INSERT INTO prices (product, price, source, image, link)
+    VALUES (?, ?, ?, ?, ?)
+  `);
 
   const insertMany = db.transaction((prices) => {
     for (const p of prices) {
@@ -11,11 +12,16 @@ export function savePrices(product, prices) {
 
       if (!price || isNaN(price)) continue;
 
-      stmt.run(product, price, p.source || "amazon");
+      stmt.run(
+        p.title,
+        price,
+        p.source || "unknown",
+        p.image || null,
+        p.link || null,
+      );
     }
   });
-  
-  insertMany(prices)
 
+  insertMany(prices);
   console.log(`💾 ${prices.length} preços salvos`);
 }

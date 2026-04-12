@@ -1,6 +1,9 @@
 import Database from "better-sqlite3";
+import { configDotenv } from "dotenv";
 
-const db = new Database("/database/data.db");
+configDotenv();
+
+const db = new Database(process.env.DATABASE_PATH || "/database/data.db");
 
 db.prepare(
   `

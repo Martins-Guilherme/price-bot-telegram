@@ -3,23 +3,43 @@ import TelegramBot from "node-telegram-bot-api";
 import { getAllScrapers } from "../scrapers/index.js";
 
 import { savePrices } from "../services/priceService.js";
-import {
-  TelegramDeletMessageError,
-  TelegramImageNotFoundError,
-} from "../errors/index.js";
+import { canUse } from "../utils/rateLimit.js";
+
+import { TelegramDeletMessageError } from "../errors/index.js";
 
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 
 bot.onText(/\/start/, (msg) => {
   bot.sendMessage(
     msg.chat.id,
-    "Olá! Eu sou o Price Bot.\nEnvie o nome de um produto para receber uma cotação.\nUse:\n/buscar nome-do-produto",
+    "Olá! Eu sou o Price Bot.\nEnvie o nome de um produto para receber uma cotação.\nUse:\n/buscar nome do produto",
   );
 });
 
 bot.onText(/\/buscar (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const product = match[1]?.trim().replace(/\s+/g, " ");
+
+  try {
+    if (!canUse(msg.from.id)) {
+      const spanMessage = await bot.sendMessage(
+        chatId,
+        "⏳ Aguarde alguns segundos antes de fazer outra busca.",
+      );
+      // Agendar a deleção de forma segura
+      setTimeout(async () => {
+        try {
+          await bot.deleteMessage(chatId, spanMessage.message_id);
+        } catch (e) {
+          // Silencia erro se a mensagem já foi apagada ou usuário limpou o chat
+          console.error("Erro ao deletar msg de spam:", e.message);
+        }
+      }, 4000);
+      return;
+    }
+  } catch (err) {
+    console.error("Erro no controle no rate de limite", err);
+  }
 
   if (!product) {
     return bot.sendMessage(

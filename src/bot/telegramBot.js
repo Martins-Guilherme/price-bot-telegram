@@ -3,6 +3,10 @@ import TelegramBot from "node-telegram-bot-api";
 import { getAllScrapers } from "../scrapers/index.js";
 
 import { savePrices } from "../services/priceService.js";
+import {
+  TelegramDeletMessageError,
+  TelegramImageNotFoundError,
+} from "../errors/index.js";
 
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 
@@ -25,7 +29,7 @@ bot.onText(/\/buscar (.+)/, async (msg, match) => {
   }
 
   const formatTitle = (title) => {
-    return title.length > 80 ? title.slice(0, 70) + "..." : title;
+    return title.length > 100 ? title.slice(0, 90) + "..." : title;
   };
 
   const loadingMsg = await bot.sendMessage(
@@ -43,7 +47,7 @@ bot.onText(/\/buscar (.+)/, async (msg, match) => {
       .filter((r) => r.status === "fulfilled")
       .flatMap((r) => r.value);
 
-    if (!resultsArrays.length) {
+    if (!results.length) {
       await bot.deleteMessage(chatId, loadingMsg.message_id);
       return bot.sendMessage(chatId, "❌ Nenhum resultado encontrado.");
     }
@@ -55,21 +59,51 @@ bot.onText(/\/buscar (.+)/, async (msg, match) => {
 
     await savePrices(topResults);
 
-    await bot.deleteMessage(chatId, loadingMsg.message_id);
+    try {
+      await bot.deleteMessage(chatId, loadingMsg.message_id);
+    } catch {
+      throw new TelegramDeletMessageError("Erro ao tentar deletar a mensagem");
+    }
 
-    const message = topResults
-      .map((p, i) => {
-        const link = p.link ? `\n🔗 ${p.link}` : "";
-        return `#${i + 1} [${p.source.toUpperCase()}]
-          ${formatTitle(p.title)}
-          💰 R$ ${p.price.toFixed(2)}${link}`;
-      })
-      .join("\n\n");
+    // Mensagem com a foto do produto
+    for (const [i, p] of topResults.entries()) {
+      const caption =
+        `#${i + 1} [${p.source.toUpperCase()}]\n` +
+        `${formatTitle(p.title)}\n` +
+        `💰 R$ ${p.price.toFixed(2)}`;
+      const options = {
+        caption,
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "🛒 Comprar",
+                url: p.link || "https://amzn.to/4szpZ1z",
+              },
+            ],
+          ],
+        },
+      };
 
-    await bot.sendMessage(chatId, message);
+      try {
+        if (p.image) {
+          await bot.sendPhoto(chatId, p.image, options);
+        } else {
+          await bot.sendPhoto(chatId, caption, {
+            reply_markup: options.reply_markup,
+          });
+        }
+      } catch (err) {
+        console.log("⚠️ Erro ao enviar: ", err.message);
+
+        await bot.sendMessage(chatId, caption, {
+          reply_markup: options.reply_markup,
+        });
+      }
+
+      await new Promise((r) => setTimeout(r, 800));
+    }
   } catch (err) {
-    console.error(err);
-
     await bot.deleteMessage(chatId, loadingMsg.message_id);
 
     if (err.name === "AmazonScraperError") {

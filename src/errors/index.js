@@ -18,3 +18,17 @@ export class AmazonScraperError extends Error {
     this.name = "AmazonScraperError";
   }
 }
+
+export class TelegramImageNotFoundError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "TelegramImageNotFoundError";
+  }
+}
+
+export class TelegramDeletMessageError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "TelegramDeletMessageError";
+  }
+}

@@ -1,6 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 
-import { getScraper } from "../scrapers/index.js";
+import { getAllScrapers } from "../scrapers/index.js";
 
 import { savePrices } from "../services/priceService.js";
 
@@ -28,45 +28,57 @@ bot.onText(/\/buscar (.+)/, async (msg, match) => {
     return title.length > 80 ? title.slice(0, 70) + "..." : title;
   };
 
+  const loadingMsg = await bot.sendMessage(
+    chatId,
+    `🔎 Buscando '${product}'...`,
+  );
   try {
-    const loadingMsg = await bot.sendMessage(
-      chatId,
-      `🔎 Buscando '${product}'...`,
+    const scrapers = getAllScrapers();
+
+    const resultsArrays = await Promise.allSettled(
+      scrapers.map((scraper) => scraper.search(product)),
     );
 
-    const scraper = getScraper("amazon");
-    const results = await scraper.search(product);
+    const results = resultsArrays
+      .filter((r) => r.status === "fulfilled")
+      .flatMap((r) => r.value);
+
+    if (!resultsArrays.length) {
+      await bot.deleteMessage(chatId, loadingMsg.message_id);
+      return bot.sendMessage(chatId, "❌ Nenhum resultado encontrado.");
+    }
+
+    // Ordenar por menor preço
+    const sortedResults = results.sort((a, b) => a.price - b.price);
+
+    const topResults = sortedResults.slice(0, 5);
+
+    await savePrices(topResults);
 
     await bot.deleteMessage(chatId, loadingMsg.message_id);
 
-    if (!results.length) {
-      return bot.sendMessage(chatId, "❌ Nenhum resultado encontrado.");
-    }
-    await savePrices(product, results);
-
-    const topResults = results.slice(0, 5);
-
     const message = topResults
-      .map(
-        (p, i) =>
-          `#${i + 1}\n${formatTitle(p.title)}\n💰 R$ ${p.price.toFixed(2)}`,
-      )
+      .map((p, i) => {
+        const link = p.link ? `\n🔗 ${p.link}` : "";
+        return `#${i + 1} [${p.source.toUpperCase()}]
+          ${formatTitle(p.title)}
+          💰 R$ ${p.price.toFixed(2)}${link}`;
+      })
       .join("\n\n");
 
     await bot.sendMessage(chatId, message);
   } catch (err) {
     console.error(err);
+
+    await bot.deleteMessage(chatId, loadingMsg.message_id);
+
     if (err.name === "AmazonScraperError") {
       return bot.sendMessage(
         chatId,
         "⚠️ Amazon bloqueou a requisição. Tente novamente mais tarde.",
       );
     }
-    if (loadingMsg) {
-      try {
-        await bot.deleteMessage(chatId, loadingMsg.message_id);
-      } catch {}
-    }
+
     await bot.sendMessage(
       chatId,
       "❌ Ocorreu um erro ao buscar o produto. Tente novamente mais tarde.",

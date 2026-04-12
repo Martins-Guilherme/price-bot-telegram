@@ -12,6 +12,8 @@ db.prepare(
       product TEXT NOT NULL,
       price REAL NOT NULL,
       source TEXT NOT NULL,
+      image TEXT,
+      link TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `,

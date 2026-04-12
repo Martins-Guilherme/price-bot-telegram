@@ -66,6 +66,8 @@ class AmazonScraper extends BaseScraper {
             const priceRaw = el.querySelector(
               ".a-price .a-offscreen",
             )?.innerText;
+            const link = el.querySelector(".a-section a")?.href;
+            const image = el.querySelector("img")?.src;
 
             if (!title || !priceRaw) return;
 
@@ -80,10 +82,12 @@ class AmazonScraper extends BaseScraper {
             items.push({
               title,
               price,
+              link,
+              image,
               source: "amazon",
             });
           });
-        return items.slice(0, 10);
+        return items.slice(0, 5);
       });
       return results;
     } catch (err) {

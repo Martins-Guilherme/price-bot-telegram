@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer";
+import { getBrowser } from "../../utils/browser.js";
 
 import { AmazonScraperError } from "../../errors/index.js";
 
@@ -10,11 +10,7 @@ class AmazonScraper extends BaseScraper {
 
     const url = `https://www.amazon.com.br/s?k=${encodeURIComponent(productName)}`;
 
-    const browser = await puppeteer.launch({
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-      headless: "new",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    const browser = await getBrowser();
 
     const page = await browser.newPage();
     await page.setJavaScriptEnabled(true);

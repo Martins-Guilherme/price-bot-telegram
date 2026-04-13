@@ -6,6 +6,7 @@ import { savePrices } from "../services/priceService.js";
 
 import { canUse } from "../utils/rateLimit.js";
 import { getCache, setCache } from "../utils/cache.js";
+import { scraperQueue, withTimeout } from "../utils/queue.js";
 
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 
@@ -120,7 +121,9 @@ bot.onText(/\/buscar\s+(.+)/, async (msg, match) => {
     const scrapers = getAllScrapers();
 
     const resultsArrays = await Promise.allSettled(
-      scrapers.map((scraper) => scraper.search(product)),
+      scrapers.map((scraper) =>
+        scraperQueue.add(() => withTimeout(scraper.search(product), 10000)),
+      ),
     );
 
     const results = resultsArrays

@@ -10,6 +10,7 @@ db.prepare(
   CREATE TABLE IF NOT EXISTS prices (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     product TEXT NOT NULL,
+    product_found TEXT NOT NULL DEFAULT 'Produto não encontrado',
     price REAL NOT NULL,
     source TEXT NOT NULL,
     image TEXT,

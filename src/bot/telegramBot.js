@@ -12,7 +12,7 @@ const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 bot.onText(/\/start/, (msg) => {
   bot.sendMessage(
     msg.chat.id,
-    "Olá! Eu sou o Price Bot.\nEnvie o nome de um produto para receber uma cotação.\nUse:\n/buscar nome do produto",
+    "Olá! Eu sou o Price Bot.\nEnvie o nome de um produto que deseja comprar e receba uma cotação com o link de compra.\nUse: /buscar nome do produto",
   );
 });
 
@@ -77,7 +77,7 @@ bot.onText(/\/buscar (.+)/, async (msg, match) => {
 
     const topResults = sortedResults.slice(0, 5);
 
-    await savePrices(topResults);
+    await savePrices(product, topResults);
 
     try {
       await bot.deleteMessage(chatId, loadingMsg.message_id);

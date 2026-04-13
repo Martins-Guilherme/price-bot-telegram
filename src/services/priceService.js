@@ -1,9 +1,9 @@
 import db from "../db/database.js";
 
-export function savePrices(prices) {
+export async function savePrices(product, prices) {
   const stmt = db.prepare(`
-    INSERT INTO prices (product, price, source, image, link)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO prices (product, product_found, price, source, image, link)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
 
   const insertMany = db.transaction((prices) => {
@@ -13,6 +13,7 @@ export function savePrices(prices) {
       if (!price || isNaN(price)) continue;
 
       stmt.run(
+        product,
         p.title,
         price,
         p.source || "unknown",

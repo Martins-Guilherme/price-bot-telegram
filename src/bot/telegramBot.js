@@ -5,8 +5,6 @@ import { getAllScrapers } from "../scrapers/index.js";
 import { savePrices } from "../services/priceService.js";
 import { canUse } from "../utils/rateLimit.js";
 
-import { TelegramDeletMessageError } from "../errors/index.js";
-
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 
 bot.onText(/\/start/, (msg) => {
@@ -81,8 +79,8 @@ bot.onText(/\/buscar (.+)/, async (msg, match) => {
 
     try {
       await bot.deleteMessage(chatId, loadingMsg.message_id);
-    } catch {
-      throw new TelegramDeletMessageError("Erro ao tentar deletar a mensagem");
+    } catch (err) {
+      console.error("Erro ao tentar deletar a mensagem: ", err.name);
     }
 
     // Mensagem com a foto do produto

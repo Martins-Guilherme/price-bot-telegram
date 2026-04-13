@@ -4,7 +4,7 @@ import { getScraper } from "./scrapers/index.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-export function startServer(bot) {
+export function startServer() {
   app.use(express.json());
 
   app.get("/", (req, res) => {

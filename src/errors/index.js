@@ -19,6 +19,13 @@ export class AmazonScraperError extends Error {
   }
 }
 
+export class MercadoLivreScraperError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "MercadoLivreScraperError";
+  }
+}
+
 export class TelegramImageNotFoundError extends Error {
   constructor(message) {
     super(message);

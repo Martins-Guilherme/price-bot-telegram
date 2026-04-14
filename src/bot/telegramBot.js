@@ -1,6 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 
-import { getAllScrapers } from "../scrapers/index.js";
+import { getAllScrapers, getScraper } from "../scrapers/index.js";
 
 import { savePrices } from "../services/priceService.js";
 
@@ -120,15 +120,24 @@ bot.onText(/\/buscar\s+(.+)/, async (msg, match) => {
     // Buscar todos os scrapers e coletar os resultados
     const scrapers = getAllScrapers();
 
+    // Executar os scrapers em paralelo com controle de timeout, tratamento de erros e fila para evitar bloqueios
     const resultsArrays = await Promise.allSettled(
       scrapers.map((scraper) =>
-        scraperQueue.add(() => withTimeout(scraper.search(product), 10000)),
+        scraperQueue.add(async () => {
+          try {
+            return await withTimeout(scraper.search(product), 10000);
+          } catch (err) {
+            console.error(`Erro no scraper ${scraper.name}:`, err.message);
+          }
+        }),
       ),
     );
 
+    // Filtrar resultados válidos e combinar em um único array
     const results = resultsArrays
-      .filter((r) => r.status === "fulfilled")
-      .flatMap((r) => r.value);
+      .filter((r) => r.status === "fulfilled" && Array.isArray(r.value))
+      .flatMap((r) => r.value)
+      .filter((p) => p && p.price && p.title);
 
     if (!results.length) {
       await limparMensagem(chatId, loadingMsg, 4000);
@@ -156,7 +165,7 @@ bot.onText(/\/buscar\s+(.+)/, async (msg, match) => {
         ? "⚠️ Amazon bloqueou a requisição. Tente novamente mais tarde."
         : "❌ Ocorreu um erro ao buscar o produto. Tente novamente mais tarde.";
 
-    await bot.sendMessage(chatId, erroMsg);
+    await bot.sendMessage(chatId, errMsg);
   }
 });
 

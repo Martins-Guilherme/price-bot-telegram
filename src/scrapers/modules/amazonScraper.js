@@ -1,8 +1,19 @@
-import puppeteer from "puppeteer";
+import { getBrowser } from "../../utils/browser.js";
 
 import { AmazonScraperError } from "../../errors/index.js";
 
 import { BaseScraper } from "../baseScraper.js";
+
+/**
+ * @description A classe AmazonScraper é responsável por realizar buscas de produtos no site Amazon. Ela estende a classe BaseScraper e implementa o método search, que recebe o nome do produto a ser buscado e retorna uma lista de resultados contendo informações como imagem, título, link e preço dos produtos encontrados.
+ *
+ * @example
+ * const scraper = new AmazonScraper();
+ * const results = await scraper.search("notebook");
+ * console.log(results);
+ *
+ * @returns {Object[]} Uma lista de objetos contendo informações dos produtos encontrados, como imagem, título, link, recurso e preço.
+ */
 
 class AmazonScraper extends BaseScraper {
   async search(productName) {
@@ -10,14 +21,10 @@ class AmazonScraper extends BaseScraper {
 
     const url = `https://www.amazon.com.br/s?k=${encodeURIComponent(productName)}`;
 
-    const browser = await puppeteer.launch({
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-      headless: "new",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    const browser = await getBrowser();
 
     const page = await browser.newPage();
-    await page.setJavaScriptEnabled(true);
+    await page.setJavaScriptEnabled(false);
 
     try {
       await page.setExtraHTTPHeaders({

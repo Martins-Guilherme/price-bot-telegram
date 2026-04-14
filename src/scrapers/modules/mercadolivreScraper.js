@@ -18,34 +18,67 @@ import { MercadoLivreScraperError } from "../../errors/index.js";
 
 class MercadoLivreScraper extends BaseScraper {
   async search(productName) {
+    if (!productName)
+      throw new MercadoLivreScraperError("Produto não informado");
+
     const url = `https://lista.mercadolivre.com.br/${encodeURIComponent(productName)}`;
 
-    const { data } = await axios.get(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-      },
-    });
-
-    const $ = cheerio.load(data);
-    const results = [];
-
-    $(".ui-search-result").each((_, el) => {
-      const title = $(el).find(".ui-search-item__title").text().trim();
-      const priceWhole = $(el).find(".price-tag-fraction").text();
-      const priceCents = $(el).find(".price-tag-cents").text();
-
-      if (!title || !priceWhole) return;
-
-      const price = parseFloat(`${priceWhole}.${priceCents || "00"}`);
-
-      results.push({
-        title,
-        price,
-        source: "mercadolivre",
+    try {
+      const { data } = await axios.get(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+          "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+          "Accept-Encoding": "gzip, deflate, br",
+        },
       });
-    });
 
-    return results;
+      const $ = cheerio.load(data);
+      const results = [];
+
+      $("ol[data-cols] li").each((_, el) => {
+        const image = $(el)
+          .find("div[data-andes-card] div.poly-card__portada img")
+          ?.attr("src");
+
+        const title = $(el).find("div[data-andes-card] h3")?.text();
+
+        const link = $(el).find("div[data-andes-card] h3 a")?.attr("href");
+
+        const priceFractions = $(el)
+          .find("div.poly-component__price div.poly-price__current")
+          .first()
+          .find(".andes-money-amount__fraction")
+          .first()
+          .text()
+          .replace(".", "");
+
+        const priceCents =
+          $(el)
+            .find("div.poly-component__price div.poly-price__current")
+            .first()
+            .find(".andes-money-amount__cents")
+            .first()
+            .text() || "00";
+
+        if (!title || !priceFractions) return;
+
+        const price = parseFloat(`${priceFractions}.${priceCents}`).toFixed(2);
+
+        results.push({
+          image,
+          title,
+          link,
+          price,
+          source: "mercadolivre",
+        });
+      });
+
+      return results.slice(0, 5);
+    } catch (error) {
+      console.error("Erro no MercadoLivreScraper:", error);
+      return [];
+    }
   }
 }
 

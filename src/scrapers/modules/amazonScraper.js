@@ -13,7 +13,7 @@ class AmazonScraper extends BaseScraper {
     const browser = await getBrowser();
 
     const page = await browser.newPage();
-    await page.setJavaScriptEnabled(true);
+    await page.setJavaScriptEnabled(false);
 
     try {
       await page.setExtraHTTPHeaders({

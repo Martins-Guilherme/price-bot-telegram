@@ -4,6 +4,17 @@ import { AmazonScraperError } from "../../errors/index.js";
 
 import { BaseScraper } from "../baseScraper.js";
 
+/**
+ * @description A classe AmazonScraper é responsável por realizar buscas de produtos no site Amazon. Ela estende a classe BaseScraper e implementa o método search, que recebe o nome do produto a ser buscado e retorna uma lista de resultados contendo informações como imagem, título, link e preço dos produtos encontrados.
+ *
+ * @example
+ * const scraper = new AmazonScraper();
+ * const results = await scraper.search("notebook");
+ * console.log(results);
+ *
+ * @returns {Object[]} Uma lista de objetos contendo informações dos produtos encontrados, como imagem, título, link, recurso e preço.
+ */
+
 class AmazonScraper extends BaseScraper {
   async search(productName) {
     if (!productName) throw new AmazonScraperError("Produto não informado");

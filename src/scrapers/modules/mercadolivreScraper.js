@@ -17,6 +17,7 @@ import { MercadoLivreScraperError } from "../../errors/index.js";
  */
 
 class MercadoLivreScraper extends BaseScraper {
+  name = "Mercado Livre";
   async search(productName) {
     if (!productName)
       throw new MercadoLivreScraperError("Produto não informado");

@@ -3,6 +3,7 @@ import * as cheerio from "cheerio";
 import { BaseScraper } from "../baseScraper.js";
 
 class KabumScraper extends BaseScraper {
+  name = "Kabum";
   async search(productName) {
     const url = `https://www.kabum.com.br/busca/${encodeURIComponent(productName)}`;
 

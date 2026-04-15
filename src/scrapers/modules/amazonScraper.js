@@ -16,6 +16,7 @@ import { BaseScraper } from "../baseScraper.js";
  */
 
 class AmazonScraper extends BaseScraper {
+  name = "Amazon";
   async search(productName) {
     if (!productName) throw new AmazonScraperError("Produto não informado");
 

@@ -49,7 +49,7 @@ export async function verifyRawNameProduct(chatId, bot, rawProduct) {
   try {
     // 1. Validação básica para evitar buscas vazias ou com caracteres inválidos.
     if (!rawProduct || !/^[a-zA-ZÀ-ÿ0-9\s\-]+$/.test(rawProduct)) {
-      return enviarMensagemDeErro(chatId, bot, new BotValidationNameError());
+      throw new BotValidationNameError("Não aceita buscas com caracteres especiais.",)
     }
 
     // 2. Controle de rate limit para evitar abusos e bloqueios
@@ -73,10 +73,10 @@ export async function verifyRawNameProduct(chatId, bot, rawProduct) {
     // 5. Enviar mensagem de carregamento e realizar a busca caso não tenha cache.
     await bot.sendMessage(chatId, `🔎 Buscando '${product}'...`);
     const results = await findScraperAndSearch(product);
-
+    console.timeEnd("scraping");
     if (!results.length) {
       throw new BotNotProductFoundException(
-        "Nenhum resultado encontrado para o produto.",
+        "Erro no scraper.",
       );
     }
 
@@ -101,7 +101,7 @@ export async function verifyRawNameProduct(chatId, bot, rawProduct) {
 export async function findScraperAndSearch(product) {
   // Buscar todos os scrapers e coletar os resultados
   const scrapers = getAllScrapers();
-
+  console.time("scraping");
   try {
     // Executar os scrapers em paralelo com controle de timeout, tratamento de erros e fila para evitar bloqueios
     const resultsArrays = await Promise.allSettled(
@@ -273,7 +273,7 @@ export async function enviarMensagemDeErro(chatId, bot, err) {
     return spanMsg;
   }
   if (err instanceof BotNotProductFoundException) {
-    spanMsg = await bot.sendMessage(chatId, "❌ Nenhum resultado encontrado.");
+    spanMsg = await bot.sendMessage(chatId, "❌ Nenhum resultado encontrado: ", err.message);
     return spanMsg;
   }
   if (err instanceof BotProductNotArrayException) {
@@ -285,6 +285,7 @@ export async function enviarMensagemDeErro(chatId, bot, err) {
     return spanMsg;
   }
   if (err instanceof BotValidationNameError) {
+    console.error("Erro de validação do nome do produto: ", err.name,"--",err.message);
     spanMsg = await bot.sendMessage(
       chatId,
       "❌ Informe um produto válido.\nEx: /buscar notebook",

@@ -73,3 +73,10 @@ export class BotProductNotArrayException extends Error {
     this.name = "BotProductNotArrayException";
   }
 }
+
+export class BotInvalidProductDataException extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "BotInvalidProductDataException";
+  }
+}

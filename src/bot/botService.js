@@ -73,7 +73,6 @@ export async function verifyRawNameProduct(chatId, bot, rawProduct) {
     // 5. Enviar mensagem de carregamento e realizar a busca caso não tenha cache.
     await bot.sendMessage(chatId, `🔎 Buscando '${product}'...`);
     const results = await findScraperAndSearch(product);
-    console.timeEnd("scraping");
     if (!results.length) {
       throw new BotNotProductFoundException(
         "Erro no scraper.",
@@ -101,7 +100,6 @@ export async function verifyRawNameProduct(chatId, bot, rawProduct) {
 export async function findScraperAndSearch(product) {
   // Buscar todos os scrapers e coletar os resultados
   const scrapers = getAllScrapers();
-  console.time("scraping");
   try {
     // Executar os scrapers em paralelo com controle de timeout, tratamento de erros e fila para evitar bloqueios
     const resultsArrays = await Promise.allSettled(

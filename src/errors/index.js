@@ -39,3 +39,37 @@ export class TelegramDeletMessageError extends Error {
     this.name = "TelegramDeletMessageError";
   }
 }
+
+export class TimeoutPqueueError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "TimeoutPqueueError";
+  }
+}
+export class BotValidationNameError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "BotValidationNameError";
+  }
+}
+
+export class BotNotProductFoundException extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "BotNotProductFoundException";
+  }
+}
+
+export class BotRateLimitException extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "BotRateLimitException";
+  }
+}
+
+export class BotProductNotArrayException extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "BotProductNotArrayException";
+  }
+}

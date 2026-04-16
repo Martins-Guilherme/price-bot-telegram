@@ -4,7 +4,7 @@
   "description": "Api para buscar preços de produtos em lojas online e enviar notificações via Telegram",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "start": "node src/index.js"
   },
   "keywords": [],

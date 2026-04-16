@@ -17,7 +17,7 @@ bot.onText(/\/buscar\s+(.+)/, async (msg, match) => {
   try {
     await verifyRawNameProduct(chatId, bot, rawProduct);
   } catch (err) {
-    console.error("Erro ao processar a busca:", err);
+    console.error(err.name, " - ", err.message);
   }
 });
 

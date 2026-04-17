@@ -92,39 +92,42 @@ Este diretório contém a configuração de containerização para o Price Bot. 
 ### 📁 Estrutura do projeto (backend)
 
 ```
- src
-    ├── bot
-    │   ├── botService.js
-    │   └── telegramBot.js
-    ├── db
-    │   └── database.js
-    ├── errors
-    │   └── index.js
-    ├── helpers
-    │   └── tests
-    │       ├── componentes.js
-    │       ├── components.js
-    │       ├── index.js
-    │       ├── mocks
-    │       ├── scrapers
-    │       └── utils
-    ├── index.js
-    ├── scrapers
-    │   ├── baseScraper.js
-    │   ├── factory.js
-    │   ├── index.js
-    │   └── modules
-    │       ├── amazonScraper.js
-    │       ├── kabumScraper.js
-    │       └── mercadolivreScraper.js
-    ├── server.js
-    ├── services
-    │   └── priceService.js
-    └── utils
-        ├── browser.js
-        ├── cache.js
-        ├── queue.js
-        └── rateLimit.js
+ src/
+├── bot/
+│   ├── botService.js         # Lógica de negócio do bot
+│   └── telegramBot.js        # Integração com API do Telegram
+├── db/
+│   └── database.js           # Conexão e queries SQLite
+├── errors/
+│   └── index.js              # Tratamento centralizado de erros
+├── helpers/
+│   └── tests/                # Testes e mocks
+│       ├── bot/
+│       ├── mocks
+│       │   └── botMock.js
+│       ├── scrapers/
+│       ├── utils/
+│       │   ├── cache.spec.js
+│       │   └── rateLimite.spec.js
+│       ├── components.js
+│       └── index.js
+├── scrapers/
+│   ├── baseScraper.js        # Interface base dos scrapers
+│   ├── factory.js            # Factory getScraper()
+│   ├── index.js
+│   └── modules/
+│       ├── amazonScraper.js
+│       ├── kabumScraper.js
+│       └── mercadolivreScraper.js
+├── services/
+│   └── priceService.js       # Orquestração da busca de preços
+├── utils/
+│   ├── browser.js            # Configuração do Puppeteer
+│   ├── cache.js              # Cache em memória (TTL)
+│   ├── queue.js              # Fila de concorrência (pqueue)
+│   └── rateLimit.js          # Controle de cooldown por usuário
+├── index.js                  # Entry point
+└── server.js                 # API Express
 ```
 
 ---

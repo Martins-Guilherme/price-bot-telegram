@@ -1,5 +1,8 @@
 import { canUse } from "../../../utils/rateLimit.js";
-import { BotRatLimitIsNotNumberError } from "../../../errors/index.js";
+import {
+  BotRatLimitIsNotNumberError,
+  BotRateLimitException,
+} from "../../../errors/index.js";
 
 describe("Rate limit", () => {
   it("Deve impedir que o userId seja uma string", () => {
@@ -19,12 +22,9 @@ describe("Rate limit", () => {
   it("Deve impedir o excesso de requisições", () => {
     const chatId = 2;
 
-    for (let i = 0; i < 10; i++) {
-      canUse(chatId);
+    function limitException() {
+      for (let i = 0; i < 10; i++) canUse(chatId);
     }
-
-    const result = canUse(chatId);
-
-    expect(result).toBe(false);
+    expect(limitException).toThrow(BotRateLimitException);
   });
 });

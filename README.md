@@ -94,12 +94,20 @@ Este diretório contém a configuração de containerização para o Price Bot. 
 ```
  src
     ├── bot
+    │   ├── botService.js
     │   └── telegramBot.js
     ├── db
     │   └── database.js
     ├── errors
     │   └── index.js
     ├── helpers
+    │   └── tests
+    │       ├── componentes.js
+    │       ├── components.js
+    │       ├── index.js
+    │       ├── mocks
+    │       ├── scrapers
+    │       └── utils
     ├── index.js
     ├── scrapers
     │   ├── baseScraper.js

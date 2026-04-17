@@ -26,6 +26,13 @@ export class MercadoLivreScraperError extends Error {
   }
 }
 
+export class KabumScraperError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "KabumScraperError";
+  }
+}
+
 export class TelegramImageNotFoundError extends Error {
   constructor(message) {
     super(message);
@@ -64,6 +71,13 @@ export class BotRateLimitException extends Error {
   constructor(message) {
     super(message);
     this.name = "BotRateLimitException";
+  }
+}
+
+export class BotRatLimitIsNotNumberError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "BotRatLimitIsNotNumberError";
   }
 }
 

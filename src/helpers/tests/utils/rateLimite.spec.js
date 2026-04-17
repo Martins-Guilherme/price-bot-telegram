@@ -1,12 +1,12 @@
 import { canUse } from "../../../utils/rateLimit.js";
-import { BotRatLimitIsNotNumber } from "../../../errors/index.js";
+import { BotRatLimitIsNotNumberError } from "../../../errors/index.js";
 
 describe("Rate limit", () => {
   it("Deve impedir que o userId seja uma string", () => {
     function inputWrong() {
       canUse("string");
     }
-    expect(inputWrong).toThrow(BotRatLimitIsNotNumber);
+    expect(inputWrong).toThrow(BotRatLimitIsNotNumberError);
   });
   it("Deve permitir uso inicial", () => {
     const chatId = 1;

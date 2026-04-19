@@ -1,3 +1,5 @@
+import { jest } from "@jest/globals";
+
 export const creteBotMock = () => {
   return {
     sendMessage: jest.fn().mockResolvedValue({}),

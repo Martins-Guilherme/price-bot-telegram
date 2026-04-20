@@ -17,7 +17,7 @@ const { BotRatLimitIsNotNumberError, BotRateLimitException } =
 
 describe("Rate limit", () => {
   beforeEach(() => {
-    clearRateLimit()
+    clearRateLimit();
     jest.useFakeTimers();
     jest.setSystemTime(new Date("2026-01-01T10:00:00"));
   });

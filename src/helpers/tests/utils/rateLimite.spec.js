@@ -1,13 +1,8 @@
-import { afterEach } from "@jest/globals";
-
-import { creteBotMock } from "../mocks/botMock.js";
-
-// Real import
-
-const { canUse } = await import("../../../utils/rateLimit.js");
-
-const { BotRatLimitIsNotNumberError, BotRateLimitException } =
-  await import("../../../errors/index.js");
+import { canUse } from "../../../utils/rateLimit.js";
+import {
+  BotRatLimitIsNotNumberError,
+  BotRateLimitException,
+} from "../../../errors/index.js";
 
 describe("Rate limit", () => {
   it("Deve impedir que o userId seja uma string", () => {
@@ -30,17 +25,6 @@ describe("Rate limit", () => {
     function limitException() {
       for (let i = 0; i < 10; i++) canUse(chatId);
     }
-    expect(new BotRateLimitException()).toEqual(new BotRateLimitException());
-  });
-
-  it("Devo fazer", async () => {
-    //🔹 Reset após tempo
-    // Exemplo:
-    // bloqueia agora
-    // espera 10 segundos
-    // permite novamente
-    // 🔹 IDs diferentes independentes
-    // chatId 1 bloqueado
-    // chatId 2 ainda livre
+    expect(limitException).toThrow(BotRateLimitException);
   });
 });

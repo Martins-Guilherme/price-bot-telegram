@@ -1,4 +1,7 @@
 const users = new Map();
+export function clearRateLimit() {
+  users.clear();
+}
 const COLLDOW = 10000; // 10 segundos
 
 import {

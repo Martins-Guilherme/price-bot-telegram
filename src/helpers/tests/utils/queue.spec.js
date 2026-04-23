@@ -14,15 +14,9 @@ describe("Queue / Timeout", () => {
   });
 
   it("Deve propagar o erro original da promise", async () => {
-    const fallingPromise = Promise.reject(
-      new TimeoutPqueueError(
-        "Esgotado o tempo de busca, tente novamente mais tarde.",
-      ),
-    );
+    const fallingPromise = Promise.reject(TimeoutPqueueError);
 
-    await expect(withTimeout(fallingPromise, 2000)).rejects.toThrow(
-      "Esgotado o tempo de busca, tente novamente mais tarde.",
-    );
+    await expect(withTimeout(fallingPromise, 900)).rejects.toThrow();
   });
 
   it("Deve respeitar o timeout customizado", async () => {

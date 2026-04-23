@@ -1,6 +1,7 @@
 import db from "../db/database.js";
-
-export async function savePrices(product, prices) {
+const data = new Date();
+data.setHours(data.getHours() - 3);
+export async function savePrices({product, prices}) {
   const stmt = db.prepare(`
     INSERT INTO prices (product, product_found, price, source, image, link)
     VALUES (?, ?, ?, ?, ?, ?)
@@ -24,5 +25,7 @@ export async function savePrices(product, prices) {
   });
 
   insertMany(prices);
-  console.log(`💾 ${prices.length} preços salvos`);
+  console.log(
+    `💾 ${prices.length} preços salvos -- ${data.toLocaleString("pt-br")}`,
+  );
 }

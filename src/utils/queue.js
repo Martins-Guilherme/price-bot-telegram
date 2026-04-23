@@ -6,11 +6,12 @@ export const scraperQueue = new PQueue({
   concurrency: 2, // fila de execução com 2 tarefas simultâneas
 });
 
-export const withTimeout = (promise, ms = 15000) => {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new TimeoutPqueueError("Tempo limite")), ms),
-    ),
-  ]);
+export const withTimeout = async (promise, ms = 15000) => {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new TimeoutPqueueError("Tempo limite"));
+    }, ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 };

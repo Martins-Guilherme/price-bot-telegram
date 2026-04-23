@@ -21,6 +21,10 @@ Este diretório contém a configuração de containerização para o Price Bot. 
   - `/database` → banco SQLite
   - `/app` → código backend (montado via volume)
 
+### Diretorio
+
+[Diretorio do projeto](https://github.com/Martins-Guilherme/price-bot-telegram-docker)
+
 ### 🏗️ Estrutura de Arquivos
 
 ```

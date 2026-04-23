@@ -1,3 +1,4 @@
+import { TimeoutPqueueError } from "../../../errors/index.js";
 import { withTimeout } from "../../../utils/queue.js";
 
 describe("Queue / Timeout", () => {
@@ -13,10 +14,14 @@ describe("Queue / Timeout", () => {
   });
 
   it("Deve propagar o erro original da promise", async () => {
-    const fallingPromise = Promise.reject(new Error("Falha real"));
+    const fallingPromise = Promise.reject(
+      new TimeoutPqueueError(
+        "Esgotado o tempo de busca, tente novamente mais tarde.",
+      ),
+    );
 
-    await expect(withTimeout(fallingPromise, 500)).rejects.toThrow(
-      "Falha real",
+    await expect(withTimeout(fallingPromise, 2000)).rejects.toThrow(
+      "Esgotado o tempo de busca, tente novamente mais tarde.",
     );
   });
 

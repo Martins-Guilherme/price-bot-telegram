@@ -102,8 +102,8 @@ class AmazonScraper extends BaseScraper {
       console.error("Erro no AmazonScraper:", err);
       return [];
     } finally {
-      if (browser) {
-        await browser.close();
+      if (page) {
+        await page.close();
       }
     }
   }

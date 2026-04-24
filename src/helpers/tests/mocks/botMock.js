@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 
-export const creteBotMock = () => {
+export const createBotMock = () => {
   return {
     sendMessage: jest.fn().mockResolvedValue({}),
     sendPhoto: jest.fn().mockResolvedValue({}),

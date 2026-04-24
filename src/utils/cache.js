@@ -1,5 +1,9 @@
 const cache = new Map();
 
+export function clearCache() {
+  cache.clear();
+}
+
 const TTL = 30 * 60 * 1000;
 // 30 minutos
 

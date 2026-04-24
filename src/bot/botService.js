@@ -1,22 +1,26 @@
 import { savePrices } from "../services/priceService.js";
 
-import { getAllScrapers, getScraper } from "../scrapers/index.js";
+import { getAllScrapers } from "../scrapers/index.js";
 
-import { getCache } from "../utils/cache.js";
-import { canUse } from "../utils/rateLimit.js";
+import { getCache, setCache } from "../utils/cache.js";
 import { scraperQueue, withTimeout } from "../utils/queue.js";
-import { setCache } from "../utils/cache.js";
+import { canUse } from "../utils/rateLimit.js";
 
 import {
   AmazonScraperError,
-  KabumScraperError,
-  MercadoLivreScraperError,
-  BotValidationNameError,
-  BotRateLimitException,
+  BotNameIsUndefinedException,
+  BotInvalidProductDataException,
+  BotNameIsEmptyException,
   BotNotProductFoundException,
   BotProductNotArrayException,
-  BotInvalidProductDataException,
+  BotRateLimitException,
+  BotNotSendResultError,
+  TimeoutPqueueError,
   BotRatLimitIsNotNumberError,
+  BotNotCachedNameError,
+  BotValidationNameError,
+  KabumScraperError,
+  MercadoLivreScraperError,
 } from "../errors/index.js";
 
 /**
@@ -53,7 +57,21 @@ export async function verifyRawNameProduct(chatId, bot, rawProduct) {
   try {
     console.time("validarNome");
     // 1. Validação básica para evitar buscas vazias ou com caracteres inválidos.
-    if (!rawProduct || !/^[a-zA-ZÀ-ÿ0-9\s\-]+$/.test(rawProduct)) {
+    if (rawProduct === undefined) {
+      return enviarMensagemDeErro({
+        bot,
+        chatId,
+        err: new BotNameIsUndefinedException("Não aceita buscas UNDEFINED."),
+      });
+    }
+    if (rawProduct.trim() === "") {
+      return enviarMensagemDeErro({
+        bot,
+        chatId,
+        err: new BotNameIsEmptyException("Não aceita buscas vazias."),
+      });
+    }
+    if (!/^[a-zA-ZÀ-ÿ0-9\s\-]+$/.test(rawProduct)) {
       return enviarMensagemDeErro({
         bot,
         chatId,
@@ -62,14 +80,15 @@ export async function verifyRawNameProduct(chatId, bot, rawProduct) {
         ),
       });
     }
-    // 2. Controle de rate limit para evitar abusos e bloqueios
-    if (!canUse(chatId)) {
+    if (typeof chatId !== "number") {
       return enviarMensagemDeErro({
         bot,
         chatId,
-        err: new BotRateLimitException("Usuário atingiu o limite de buscas."),
+        err: new BotRatLimitIsNotNumberError("O chatId deve ser um número."),
       });
     }
+    // 2. Controle de rate limit para evitar abusos e bloqueios
+    await canUse(chatId);
 
     // 3. Setando o produto para uma versão mais limpa, removendo múltiplos espaços e caracteres extras
     const product = rawProduct.replace(/\s+/g, " ");
@@ -80,7 +99,7 @@ export async function verifyRawNameProduct(chatId, bot, rawProduct) {
     if (Array.isArray(isCachedName) && isCachedName.length > 0) {
       await bot.sendMessage(chatId, "⚡ Resultados recentes encontrados:");
       console.timeEnd("validarNome");
-      return sendOutputData(bot, chatId, isCachedName);
+      return sendOutputData({ bot, chatId, topResults: isCachedName });
     }
 
     // 5. Enviar mensagem de carregamento e realizar a busca caso não tenha cache.
@@ -93,7 +112,7 @@ export async function verifyRawNameProduct(chatId, bot, rawProduct) {
         err: new BotProductNotArrayException("O resultado não é um array."),
       });
     }
-    if (!results || results.length === 0) {
+    if (!results) {
       return enviarMensagemDeErro({
         chatId,
         bot,
@@ -106,13 +125,12 @@ export async function verifyRawNameProduct(chatId, bot, rawProduct) {
 
     // 6. Chama a função para enviar os resultados formatados para o usuário.
     console.timeEnd("validarNome");
-    await sendOutputData(bot, chatId, response);
+    await sendOutputData({ bot, chatId, topResults: response });
   } catch (err) {
-    console.error(`Erro inesperado: ${err.message}`);
-    return enviarMensagemDeErro({
-      chatId,
+    enviarMensagemDeErro({
       bot,
-      err,
+      chatId,
+      err: err,
     });
   }
 }
@@ -140,11 +158,8 @@ export async function findScraperAndSearch(product) {
           try {
             return await withTimeout(scraper.search(product), 9000);
           } catch (err) {
-            enviarMensagemDeErro(
-              bot,
-              chatId,
-              new Error(`Erro no scraper ${scraper}: ${err}`),
-            );
+            console.error("Erro em scraper individual:", err.message);
+            return [];
           }
         }),
       ),
@@ -217,7 +232,7 @@ export async function processResults(product, results) {
 
   const topResults = sortedResults.slice(0, 5);
 
-  await savePrices(product, topResults);
+  await savePrices({ product, prices: topResults });
 
   setCache(product, topResults);
 
@@ -225,7 +240,7 @@ export async function processResults(product, results) {
 }
 
 // 4. Retorno da mensagem com os resultados encontrados, caso tenha cache, formatando o título, preço e link de forma clara e atrativa para o usuário.
-async function sendOutputData(bot, chatId, topResults) {
+async function sendOutputData({ bot, chatId, topResults }) {
   try {
     console.time("EnviarDadosParaOUsuario");
     if (!Array.isArray(topResults)) {
@@ -253,7 +268,7 @@ async function sendOutputData(bot, chatId, topResults) {
           `✨ *Oferta encontrada*\n\n` +
           `🏷️ *${formatTitle(p?.title)}*\n` +
           `💰 *R$ ${p?.price}*\n\n` +
-          `📦 ${p?.source.toUpperCase()}`;
+          `📦 ${p?.source.toUpperCase() || "Desconhecido"}`;
         const options = {
           caption,
           reply_markup: {
@@ -278,83 +293,107 @@ async function sendOutputData(bot, chatId, topResults) {
 
         await new Promise((r) => setTimeout(r, 700));
       } catch (err) {
-        console.error("Erro ao enviar: ", err.message);
-        enviarMensagemDeErro({ bot, chatId, err });
+        console.error(
+          `Erro ao enviar produto ${i + 1} (${p?.title || "sem título"}):`,
+          err.message,
+        );
       }
     }
     console.timeEnd("EnviarDadosParaOUsuario");
   } catch (err) {
-    console.error("Erro ao enviar resultado para o usuário.");
-    enviarMensagemDeErro({ bot, chatId, err });
+    console.error("Erro geral em sendOutputData:", err.message, err.stack);
+    enviarMensagemDeErro({
+      bot,
+      chatId,
+      err: new BotNotSendResultError("Erro ao enviar resultado para o usuário"),
+    });
   }
 }
 
 // 5 - Mensagem de erro específica para cada tipo de falha, como bloqueio do scraper, produto não encontrado ou erro de rede.
 export async function enviarMensagemDeErro({ chatId, bot, err }) {
   console.time("EnviarMensagemdeErro");
-  let spanMsg, logError;
-  if (err instanceof BotRatLimitIsNotNumberError) {
-    logError = "Entrada de dados inválida, chatId é uma string";
-    spanMsg = await bot.sendMessage(
-      chatId,
-      "Erro ao repetir a requisição, comportamento inesperado.",
-    );
-  }
-  if (err instanceof BotRateLimitException) {
-    logError = "Usuário atingiu o limite de buscas por minuto:";
-    spanMsg = await bot.sendMessage(
-      chatId,
-      "⏳ Aguarde 10 segundos antes de fazer outra busca.",
-    );
-  }
-  if (err instanceof BotInvalidProductDataException) {
-    logError = "Erro nos dados do produto encontrado:";
-    spanMsg = await bot.sendMessage(
-      chatId,
-      `❌ Erro nos dados do produto encontrado.`,
-    );
-  }
-  if (err instanceof BotNotProductFoundException) {
-    logError = "A busca em todos os scrapers resultaram em falha";
-    spanMsg = await bot.sendMessage(chatId, `❌ Nenhum resultado encontrado.`);
-  }
-  if (err instanceof BotProductNotArrayException) {
-    logError = "topResultados não é uma array";
-    spanMsg = await bot.sendMessage(chatId, `❌ Erro ao processar resultados.`);
-  }
-  if (err instanceof BotValidationNameError) {
-    logError = "Erro de validação do nome do produto:";
-    spanMsg = await bot.sendMessage(
-      chatId,
-      "❌ Informe um produto válido.\nEx: /buscar notebook",
-    );
-  }
-  if (err instanceof AmazonScraperError) {
-    logError = "Erro no scraper Amazon";
-    spanMsg = await bot.sendMessage(
-      chatId,
-      "⚠️ Amazon bloqueou a requisição.\nTente novamente mais tarde.",
-    );
-    return (logError, spanMsg);
-  }
-  if (err instanceof MercadoLivreScraperError) {
-    logError = "Erro no scraper Mercado livre";
-    spanMsg = await bot.sendMessage(
-      chatId,
-      "⚠️ Mercado livre bloqueou a requisição.\nTente novamente mais tarde.",
-    );
-  }
-  if (err instanceof KabumScraperError) {
-    logError = "Erro no scraper Kabum";
-    spanMsg = await bot.sendMessage(
-      chatId,
-      "⚠️ Kabum bloqueou a requisição.\nTente novamente mais tarde.",
-    );
-  }
-  console.error(
-    `${logError ? logError : "Erro inesperado"}: ${err.name} - ${err.message}`,
-  );
-  if (!spanMsg) return (spanMsg = "⚠️ Ocorreu um erro inesperado.");
+  // 1. Mapa de configurações de erro
+  const errorHandlers = [
+    {
+      type: BotRatLimitIsNotNumberError,
+      log: "Entrada inválida, utilizado um número",
+      msg: "❌ Erro de validação interno, tente novamente mais tarde.",
+    },
+    {
+      type: BotNotSendResultError,
+      log: "Erro parcial dos resultado",
+      msg: "❌ Erro parcial dos resultado.",
+    },
+    {
+      type: BotNameIsEmptyException,
+      log: "Usuario tentou fazer uma busca vazia",
+      msg: "❌ Não aceita buscas vazias.",
+    },
+    {
+      type: BotNameIsUndefinedException,
+      log: "Usuario tentou fazer uma busca undefined",
+      msg: "❌ Erro de validação de nome, tente novamente mais tarde",
+    },
+    {
+      type: BotRateLimitException,
+      log: "Usuário atingiu o limite",
+      msg: "⏳ Aguarde 10 segundos...",
+    },
+    {
+      type: BotInvalidProductDataException,
+      log: "Erro nos dados do produto",
+      msg: "❌ Erro nos dados do produto encontrado.",
+    },
+    {
+      type: BotNotProductFoundException,
+      log: "Falha em todos os scrapers",
+      msg: "❌ Nenhum resultado encontrado.",
+    },
+    {
+      type: BotProductNotArrayException,
+      log: "topResultados não é array",
+      msg: "❌ Erro ao processar resultados.",
+    },
+    {
+      type: BotValidationNameError,
+      log: "Erro de validação de nome",
+      msg: "❌ Informe um produto válido.\nEx: /buscar notebook",
+    },
+    {
+      type: TimeoutPqueueError,
+      log: "Erro Pqueue tempo limite de espera estourado",
+      msg: "Esgotado o tempo de busca, tente novamente mais tarde.",
+    },
+    {
+      type: BotNotCachedNameError,
+      log: "Erro ao buscar cache, produto não encontrado",
+      msg: "⚠️ Problemas de conexão, por favor tente novamente em breve.",
+    },
+    {
+      type: AmazonScraperError,
+      log: "Erro no scraper Amazon",
+      msg: "⚠️ Amazon bloqueou a requisição...",
+    },
+    {
+      type: MercadoLivreScraperError,
+      log: "Erro no scraper ML",
+      msg: "⚠️ Mercado livre bloqueou...",
+    },
+    {
+      type: KabumScraperError,
+      log: "Erro no scraper Kabum",
+      msg: "⚠️ Kabum bloqueou...",
+    },
+  ];
+
+  const handler = errorHandlers.find((e) => err instanceof e.type);
+
+  let logError = handler?.log || "Erro inesperado. ";
+  let userMsg = handler?.msg || "⚠️ Ocorreu um erro inesperado.";
+
+  console.error(`${logError}: ${err.name} - ${err.message}`);
+  const spanMsg = await bot.sendMessage(chatId, userMsg);
   console.timeEnd("EnviarMensagemdeErro");
   return await spanMsg;
 }

@@ -47,6 +47,7 @@ class AmazonScraper extends BaseScraper {
       });
 
       await page.goto(url, {
+        signal: AbortSignal.timeout(60000),
         waitUntil: "networkidle2",
         timeout: 60000,
       });

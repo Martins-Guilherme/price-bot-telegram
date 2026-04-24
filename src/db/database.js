@@ -3,7 +3,7 @@ import { configDotenv } from "dotenv";
 
 configDotenv();
 
-const db = new Database(process.env.DATABASE_PATH || ":memory:");
+const db = new Database(process.env.DATABASE_PATH || "/database/data.db");
 
 db.prepare(
   `

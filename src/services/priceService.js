@@ -1,7 +1,6 @@
 import db from "../db/database.js";
-export async function savePrices({ product, prices }) {
-  let data = new Date();
-  data.setHours(data.getHours() - 3);
+
+export async function savePrices(product, prices) {
   const stmt = db.prepare(`
     INSERT INTO prices (product, product_found, price, source, image, link)
     VALUES (?, ?, ?, ?, ?, ?)
@@ -11,7 +10,7 @@ export async function savePrices({ product, prices }) {
     for (const p of prices) {
       const price = parseFloat(p.price);
 
-      if (price === null || price === undefined || !price || isNaN(price)) continue;
+      if (!price || isNaN(price)) continue;
 
       stmt.run(
         product,
@@ -25,7 +24,5 @@ export async function savePrices({ product, prices }) {
   });
 
   insertMany(prices);
-  console.log(
-    `💾 ${prices.length} preços salvos -- ${data.toLocaleString("pt-br")}`,
-  );
+  console.log(`💾 ${prices.length} preços salvos`);
 }

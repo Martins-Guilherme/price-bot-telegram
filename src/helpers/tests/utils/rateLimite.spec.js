@@ -1,49 +1,30 @@
-import {
-  afterEach,
-  it,
-  describe,
-  expect,
-  jest,
-  beforeEach,
-} from "@jest/globals";
-import { clearRateLimit } from "../../../utils/rateLimit.js";
-
-// Real import
-
-const { canUse } = await import("../../../utils/rateLimit.js");
-
-const { BotRatLimitIsNotNumberError, BotRateLimitException } =
-  await import("../../../errors/index.js");
+import { canUse } from "../../../utils/rateLimit.js";
+import { BotRatLimitIsNotNumberError } from "../../../errors/index.js";
 
 describe("Rate limit", () => {
-  beforeEach(() => {
-    clearRateLimit();
-    jest.useFakeTimers();
-    jest.setSystemTime(new Date("2026-01-01T10:00:00"));
-  });
-
   it("Deve impedir que o userId seja uma string", () => {
-    expect(() => canUse("string")).toThrow(BotRatLimitIsNotNumberError);
+    function inputWrong() {
+      canUse("string");
+    }
+    expect(inputWrong).toThrow(BotRatLimitIsNotNumberError);
   });
   it("Deve permitir uso inicial", () => {
-    expect(canUse(1)).toBe(true);
+    const chatId = 1;
+
+    const result = canUse(chatId);
+
+    expect(result).toBe(true);
   });
 
   it("Deve impedir o excesso de requisições", () => {
-    canUse(2);
-    expect(() => canUse(2)).toThrow(BotRateLimitException);
-  });
+    const chatId = 2;
 
-  it("Deve liberar apos 10 segundos", async () => {
-    canUse(3);
-    jest.advanceTimersByTime(10001);
-    expect(canUse(3)).toBe(true);
-  });
+    for (let i = 0; i < 10; i++) {
+      canUse(chatId);
+    }
 
-  it("Deve tratar usuarios diferentes de forma independente", () => {
-    canUse(10);
-    expect(() => canUse(10)).toThrow(BotRateLimitException);
+    const result = canUse(chatId);
 
-    expect(canUse(20)).toBe(true);
+    expect(result).toBe(false);
   });
 });

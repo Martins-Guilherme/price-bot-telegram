@@ -47,7 +47,6 @@ class AmazonScraper extends BaseScraper {
       });
 
       await page.goto(url, {
-        signal: AbortSignal.timeout(60000),
         waitUntil: "networkidle2",
         timeout: 60000,
       });
@@ -103,8 +102,8 @@ class AmazonScraper extends BaseScraper {
       console.error("Erro no AmazonScraper:", err);
       return [];
     } finally {
-      if (page) {
-        await page.close();
+      if (browser) {
+        await browser.close();
       }
     }
   }

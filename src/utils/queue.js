@@ -7,11 +7,12 @@ export const scraperQueue = new PQueue({
 });
 
 export const withTimeout = async (promise, ms = 15000) => {
-  let timer;
+  const controller = new AbortController();
   const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => {
+    setTimeout(() => {
+      controller.abort();
       reject(new TimeoutPqueueError("Tempo limite"));
     }, ms);
   });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  return Promise.race([promise, timeout]).finally(() => controller.abort());
 };

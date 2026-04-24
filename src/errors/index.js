@@ -59,11 +59,36 @@ export class BotValidationNameError extends Error {
     this.name = "BotValidationNameError";
   }
 }
+export class BotNotSendResultError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "BotNotSendResultError";
+  }
+}
+export class BotNotCachedNameError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "BotNotCachedNameError";
+  }
+}
 
 export class BotNotProductFoundException extends Error {
   constructor(message) {
     super(message);
     this.name = "BotNotProductFoundException";
+  }
+}
+export class BotNameIsEmptyException extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "BotNameIsEmptyException";
+  }
+}
+
+export class BotNameIsUndefinedException extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "BotNameIsUndefinedException";
   }
 }
 

@@ -64,7 +64,7 @@ class MercadoLivreScraper extends BaseScraper {
 
         if (!title || !priceFractions) return;
 
-        const price = parseFloat(`${priceFractions}.${priceCents}`).toFixed(2);
+        const price = parseFloat(`${priceFractions}.${priceCents}`);
 
         results.push({
           image,

@@ -3,20 +3,19 @@ import puppeteer from "puppeteer";
 let browserInstance = null;
 
 export async function getBrowser() {
-  if (browserInstance) return browserInstance;
-
-  browserInstance = await puppeteer.launch({
+  return await puppeteer.launch({
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
     headless: "new",
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
+      "--disable-accelerated-2d-canvas",
+      "--no-first-run",
+      "--no-zygote",
       "--disable-gpu",
     ],
   });
-
-  return browserInstance;
 }
 
 // 🔥 Fechamento seguro (Docker / CTRL+C / crash)

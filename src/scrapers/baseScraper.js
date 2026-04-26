@@ -7,6 +7,7 @@ import { BaseScraperError } from "../errors/index.js";
  *
  */
 export class BaseScraper {
+  timeout = 9000;
   async search(productName) {
     throw new BaseScraperError("Metodo não implementado");
   }

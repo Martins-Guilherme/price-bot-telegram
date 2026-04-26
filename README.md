@@ -93,45 +93,48 @@ Este diretório contém a configuração de containerização para o Price Bot. 
     restart: unless-stopped
 ```
 
-### 📁 Estrutura do projeto (backend)
+### 📂 Estrutura do projeto (backend)
 
-```
- src/
+src/
 ├── bot/
-│   ├── botService.js         # Lógica de negócio do bot
-│   └── telegramBot.js        # Integração com API do Telegram
+│   ├── botService.js             # Lógica de negócio do bot
+│   └── telegramBot.js            # Integração com API do Telegram
 ├── db/
-│   └── database.js           # Conexão e queries SQLite
+│   └── database.js               # Conexão e queries SQLite
 ├── errors/
-│   └── index.js              # Tratamento centralizado de erros
+│   └── index.js                  # Tratamento centralizado de erros
 ├── helpers/
-│   └── tests/                # Testes e mocks
+│   └── tests/                    # Testes e mocks
 │       ├── bot/
-│       ├── mocks
+│       │   └── botService.spec.js
+│       ├── components.js
+│       ├── index.js
+│       ├── mocks/
 │       │   └── botMock.js
 │       ├── scrapers/
-│       ├── utils/
-│       │   ├── cache.spec.js
-│       │   └── rateLimite.spec.js
-│       ├── components.js
-│       └── index.js
+│       ├── services/
+│       │   └── priceService.spec.js
+│       └── utils/
+│           ├── cache.spec.js
+│           ├── queue.spec.js
+│           └── rateLimite.spec.js
+├── index.js                      # Entry point
 ├── scrapers/
-│   ├── baseScraper.js        # Interface base dos scrapers
-│   ├── factory.js            # Factory getScraper()
+│   ├── baseScraper.js            # Interface base dos scrapers
+│   ├── factory.js                # Factory getScraper()
 │   ├── index.js
 │   └── modules/
 │       ├── amazonScraper.js
 │       ├── kabumScraper.js
 │       └── mercadolivreScraper.js
+├── server.js                     # API Express
 ├── services/
-│   └── priceService.js       # Orquestração da busca de preços
-├── utils/
-│   ├── browser.js            # Configuração do Puppeteer
-│   ├── cache.js              # Cache em memória (TTL)
-│   ├── queue.js              # Fila de concorrência (pqueue)
-│   └── rateLimit.js          # Controle de cooldown por usuário
-├── index.js                  # Entry point
-└── server.js                 # API Express
+│   └── priceService.js           # Orquestração da busca de preços
+└── utils/
+    ├── browser.js                # Configuração do Puppeteer
+    ├── cache.js                  # Cache em memória (TTL)
+    ├── queue.js                  # Fila de concorrência (pqueue)
+    └── rateLimit.js              # Controle de cooldown por usuário
 ```
 
 ---

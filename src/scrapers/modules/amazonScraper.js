@@ -80,13 +80,15 @@ class AmazonScraper extends BaseScraper {
 
             if (!title || !priceRaw) return;
 
-            const price = parseFloat(
-              priceRaw
-                .replace("R$", "")
-                .replace(/\s/g, "")
-                .replace(/\./g, "")
-                .replace(",", "."),
-            );
+            const price = priceRaw
+              ? parseFloat(
+                  priceRaw
+                    .replace("R$", "")
+                    .replace(/\s/g, "")
+                    .replace(/\./g, "")
+                    .replace(",", "."),
+                )
+              : NaN;
 
             items.push({
               title,
@@ -103,9 +105,8 @@ class AmazonScraper extends BaseScraper {
       console.error("Erro no AmazonScraper:", err);
       return [];
     } finally {
-      if (page) {
-        await page.close();
-      }
+      if (page && !page.isClosed()) await page.close();
+      if (browser) await browser.close();
     }
   }
 }

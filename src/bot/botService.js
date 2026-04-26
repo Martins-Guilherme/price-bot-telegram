@@ -156,9 +156,14 @@ export async function findScraperAndSearch(product) {
             return [];
           }
           try {
-            return await withTimeout(scraper.search(product), 9000);
+            const result = await withTimeout(
+              scraper.search(product),
+              scraper.timeout,
+            );
+            console.log(`✅ ${scraper.name}: ${result.length} resultados`);
+            return result;
           } catch (err) {
-            console.error("Erro em scraper individual:", err.message);
+            console.error(`❌ ${scraper.name} falhou: `, err.message);
             return [];
           }
         }),
@@ -228,11 +233,85 @@ async function limparMensagem(bot, chatId, message, timer = 0) {
 
 // 3. Processar os resultados encontrados, ordenando por preço e salvando no banco de dados.
 export async function processResults(product, results) {
-  const sortedResults = results.sort((a, b) => a.price - b.price);
+  const normalizePrice = (value) => {
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? value : NaN;
+    }
+
+    if (typeof value !== "string") {
+      return NaN;
+    }
+
+    const cleaned = value.trim().replace(/[^\d.,]/g, "");
+
+    if (!cleaned) return NaN;
+
+    const hasComma = cleaned.includes(",");
+    const hasDot = cleaned.includes(".");
+
+    let normalized = cleaned;
+
+    // Ex: 1.299,90
+    if (hasComma && hasDot) {
+      normalized = cleaned.replace(/\./g, "").replace(",", ".");
+    }
+    // Ex: 1299,90
+    else if (hasComma) {
+      normalized = cleaned.replace(",", ".");
+    }
+    // Ex: 1.299 ou 1.299.999
+    else if (hasDot) {
+      const parts = cleaned.split(".");
+
+      if (parts.length > 2) {
+        const cents = parts.pop();
+        normalized = parts.join("") + "." + cents;
+      } else {
+        const decimalPart = parts[1];
+
+        // se tiver 3 dígitos após ponto, provavelmente milhar
+        if (decimalPart?.length === 3) {
+          normalized = parts.join("");
+        }
+      }
+    }
+
+    const parsed = parseFloat(normalized);
+
+    return Number.isFinite(parsed) ? parsed : NaN;
+  };
+
+  const normalizedResults = results
+    .map((item) => {
+      const normalizedPrice = normalizePrice(item.price);
+
+      return {
+        ...item,
+        price: normalizedPrice,
+      };
+    })
+    .filter((item) => item.title && item.link && Number.isFinite(item.price));
+
+  const deduplicatedResults = normalizedResults.filter(
+    (item, index, array) =>
+      index ===
+      array.findIndex(
+        (p) =>
+          p.link === item.link ||
+          (p.title === item.title &&
+            p.price === item.price &&
+            p.source === item.source),
+      ),
+  );
+
+  const sortedResults = deduplicatedResults.sort((a, b) => a.price - b.price);
 
   const topResults = sortedResults.slice(0, 5);
 
-  await savePrices({ product, prices: topResults });
+  await savePrices({
+    product,
+    prices: topResults,
+  });
 
   setCache(product, topResults);
 

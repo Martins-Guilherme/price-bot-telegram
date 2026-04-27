@@ -95,6 +95,7 @@ Este diretório contém a configuração de containerização para o Price Bot. 
 
 ### 📂 Estrutura do projeto (backend)
 
+```
 src/
 ├── bot/
 │   ├── botService.js             # Lógica de negócio do bot
